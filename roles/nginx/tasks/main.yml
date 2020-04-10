@@ -1,0 +1,38 @@
+---
+-   name: Install NGINX
+    apt:
+        name: nginx
+        state: latest
+        update_cache: yes
+
+
+-   name: Copy nginx.conf
+    template:
+        src: "nginx.conf.j2"
+        dest: "{{ nginx_conf_file }}"
+        owner: root
+        group: root
+        mode: 0644
+
+
+-   name: Create site directories
+    become: true
+    file:
+        path: '{{ item }}'
+        state: directory
+        mode: 0755
+    with_items: "{{ nginx_sites_dirs }}"
+
+-   name: Start NGINX
+    service:
+        name: "{{ nginx_service }}"
+        state: started
+        enabled: yes
+
+-   name: Add nginx group to user
+    user:
+        name: "{{ local_user }}"
+        groups: www-data
+        append: yes
+    notify: restart-nginx
+

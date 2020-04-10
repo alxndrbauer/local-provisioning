@@ -1,0 +1,13 @@
+---
+common_packages:
+    - curl
+    - wget
+    - git
+    - vim
+    - perl
+    - zip
+    - unzip
+    - ghostscript
+    - thunderbird
+    - ca-certificates
+    - software-properties-common

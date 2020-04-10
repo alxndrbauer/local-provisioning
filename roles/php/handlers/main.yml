@@ -1,0 +1,16 @@
+---
+
+- name: restart-php-fpm
+  service:
+      name: "{{php_fpm_service}}"
+      state: restarted
+
+- name: reload-php-fpm
+  service:
+      name: "{{php_fpm_service}}"
+      state: reloaded
+
+- name: restart-memcached
+  service:
+      name: "memcached.service"
+      state: restarted

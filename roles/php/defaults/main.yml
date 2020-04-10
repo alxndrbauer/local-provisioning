@@ -1,0 +1,68 @@
+---
+php_version: "7.3"
+
+
+remi_repo_url: "https://rpms.remirepo.net/enterprise/remi-release-7.rpm"
+remi_repo_url_fedora: "http://rpms.remirepo.net/fedora/remi-release-{{ansible_distribution_major_version}}.rpm"
+remi_repo_gpg_key_url: "https://rpms.remirepo.net/RPM-GPG-KEY-remi"
+
+php_packages:
+    - php-fpm
+    - php-common
+    - php-cli
+    - php-pdo
+    - php-mysql
+    - php-gd
+    - php-xml
+    - php-mbstring
+    - php-mcrypt
+    - php-igbinary
+    - php-bcmath
+    - php-opcache
+    - php-zip
+    - php-intl
+    - php-soap
+    - php-xsl
+    - php-redis
+    - php-imap
+
+php_fpm_service: "php-fpm.service"
+
+php_session_handler: "memcached"
+
+php_fpm_pool_conf_path: "/etc/php-fpm.d/www.conf"
+php_fpm_ini_path: "/etc/php.ini"
+php_opcache_ini_path: "/etc/php.d/10-opcache.ini"
+php_memcached_ini_path: "/etc/php.d/memcached.ini"
+php_fpm_socket_path: "/var/run/php-fpm/php-fpm.sock"
+php_fpm_wsdl_cache_dir: "/tmp"
+php_fpm_memory_limit: "1024M"
+php_fpm_max_execution_time: 600
+php_fpm_realpath_cache_size: "4096K"
+php_fpm_realpath_cache_ttl: 600
+php_fpm_sess_lock_wait_min: 330
+php_fpm_sess_lock_wait_max: 600
+php_fpm_sess_lock_retries: 250
+php_fpm_sess_lock_expire: "{{php_fpm_max_execution_time}}"
+php_fpm_conf_user: "{{ webuser }}"
+php_fpm_conf_group: "nginx"
+php_fpm_conf_mode: "0660"
+
+php_max_input_vars: 5000
+
+memcached_packages:
+    - "memcached"
+    - "php-pecl-memcache"
+    - "php-pecl-memcached"
+
+memcached_user: "memcached"
+memcached_config_file: "/etc/sysconfig/memcached"
+memcached_ini_file: "/etc/php.d/50-memcached.ini"
+memcached_port: 11211
+memcached_listen_ip: 127.0.0.1
+
+memcached_memory_limit: 64
+memcached_connections: 1024
+
+memcached_log_file: "/var/log/memcached.log"
+memcached_log_verbosity: ""

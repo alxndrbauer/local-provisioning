@@ -1,0 +1,89 @@
+---
+# This playbook updates a HFH server
+
+-   hosts: local
+
+    vars:
+        local_user: '{{ ansible_user_id }}'
+
+    tasks:
+    -   include_role:
+            name: common
+            apply:
+                become: yes
+
+    -   include_role:
+            name: nginx
+            apply:
+                become: yes    
+
+    -   include_role:
+            name: php
+            apply:
+                become: yes
+        when: php_install
+
+    -   include_role:
+            name: pip
+            apply:
+                become: yes
+        when: pip_install
+
+    -   include_role:
+            name: mysql
+            apply:
+                become: yes
+        when: mysql_install
+
+    -   include_role:
+            name: ntp
+            apply:
+                become: yes
+        when: ntp_install
+
+    -   include_role:
+            name: qpdf
+            apply:
+                become: yes
+        when: qpdf_install
+
+    -   include_role:
+            name: docker
+            apply:
+                become: yes
+        when: docker_install
+
+    -   name: "NPM und YARN"
+        become: yes
+        shell: "curl --silent --location https://rpm.nodesource.com/setup_10.x | bash - && yum -y install nodejs && curl -o- -L https://yarnpkg.com/install.sh | bash && npm install -g gulp && npm install -g yarn"
+
+    -   name: "Create studios nginx site"
+        become: yes
+        template:
+            src: templates/nginx-site_studios_local.conf.j2
+            dest: /etc/nginx/sites-available/studios.conf
+        notify: restart-nginx
+
+    -   name: "Create campus nginx site"
+        become: yes
+        template:
+            src: templates/nginx-site_campus_local.conf.j2
+            dest: /etc/nginx/sites-available/campus.conf
+        notify: restart-nginx
+
+
+    -   name: "Enable studios nginx site"
+        become: yes
+        file:
+            src: /etc/nginx/sites-available/studios.conf
+            dest: /etc/nginx/sites-enabled/studios.conf
+            state: link
+        notify: restart-nginx
+
+    -   name: "Enable studios nginx site"
+        become: yes
+        file:
+            src: /etc/nginx/sites-available/campus.conf
+            dest: /etc/nginx/sites-enabled/campus.conf
+            state: link
+        notify: restart-nginx
