@@ -1,4 +1,4 @@
-user  {{ local_user }} nginx;
+user  {{ local_user }} www-data;
 worker_processes  {{ nginx_worker_processes }};
 worker_rlimit_nofile 64000;
 working_directory /tmp/;

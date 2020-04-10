@@ -1,32 +1,37 @@
 ---
 php_version: "7.3"
 
-
-remi_repo_url: "https://rpms.remirepo.net/enterprise/remi-release-7.rpm"
-remi_repo_url_fedora: "http://rpms.remirepo.net/fedora/remi-release-{{ansible_distribution_major_version}}.rpm"
-remi_repo_gpg_key_url: "https://rpms.remirepo.net/RPM-GPG-KEY-remi"
-
 php_packages:
-    - php-fpm
-    - php-common
-    - php-cli
-    - php-pdo
-    - php-mysql
-    - php-gd
-    - php-xml
-    - php-mbstring
-    - php-mcrypt
+    - "php{{ php_version }}"
+    - "php{{ php_version }}-bcmath"
+    - "php{{ php_version }}-fpm"
+    - "php{{ php_version }}-cli"
+    - "php{{ php_version }}-common"
+    - "php{{ php_version }}-curl"
+    - "php{{ php_version }}-dev"
+    - "php{{ php_version }}-gd"
+    - "php{{ php_version }}-gmp"
+    - "php{{ php_version }}-intl"
+    - "php{{ php_version }}-json"
+    - "php{{ php_version }}-ldap"
+    - "php{{ php_version }}-mbstring"
+    - "php{{ php_version }}-mysql"
+    - "php{{ php_version }}-opcache"
+    - "php{{ php_version }}-pdo"
+    - "php{{ php_version }}-phpdbg"
+    - "php{{ php_version }}-soap"
+    - "php{{ php_version }}-sqlite3"
+    - "php{{ php_version }}-xml"
+    - "php{{ php_version }}-zip"
+    - "php{{ php_version }}-imap"
+    - "php{{ php_version }}-xsl"
+    - "php{{ php_version }}-mcrypt"
+    - php-apcu
     - php-igbinary
-    - php-bcmath
-    - php-opcache
-    - php-zip
-    - php-intl
-    - php-soap
-    - php-xsl
     - php-redis
-    - php-imap
+    - php-xdebug
 
-php_fpm_service: "php-fpm.service"
+php_fpm_service: "php-fpm"
 
 php_session_handler: "memcached"
 
@@ -44,16 +49,16 @@ php_fpm_sess_lock_wait_min: 330
 php_fpm_sess_lock_wait_max: 600
 php_fpm_sess_lock_retries: 250
 php_fpm_sess_lock_expire: "{{php_fpm_max_execution_time}}"
-php_fpm_conf_user: "{{ webuser }}"
-php_fpm_conf_group: "nginx"
+php_fpm_conf_user: "{{ local_user }}"
+php_fpm_conf_group: "www-data"
 php_fpm_conf_mode: "0660"
 
 php_max_input_vars: 5000
 
 memcached_packages:
     - "memcached"
-    - "php-pecl-memcache"
-    - "php-pecl-memcached"
+    - "php-memcache"
+    - "php-memcached"
 
 memcached_user: "memcached"
 memcached_config_file: "/etc/sysconfig/memcached"

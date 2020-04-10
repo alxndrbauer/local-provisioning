@@ -21,7 +21,6 @@
             name: php
             apply:
                 become: yes
-        when: php_install
 
     -   include_role:
             name: pip

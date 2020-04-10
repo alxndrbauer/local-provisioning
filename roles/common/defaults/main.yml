@@ -11,3 +11,4 @@ common_packages:
     - thunderbird
     - ca-certificates
     - software-properties-common
+    - apt-transport-https

@@ -1,0 +1,45 @@
+---
+
+-   name: SESSION | Install memcached packages
+    apt:
+        name: "{{ memcached_packages }}"
+        state: latest
+
+-   name: SESSION | Configure memcached
+    template:
+        src: memcached.conf.j2
+        dest: "{{ memcached_config_file }}"
+        owner: root
+        group: root
+        mode: 0644
+    notify: restart-memcached
+
+#-   name: SESSION | Configure memcached ini
+#    ini_file:
+#        path: "{{memcached_ini_file}}"
+#        section: "{{item.section}}"
+#        option: "{{item.option}}"
+#        value: "{{item.value}}"
+#    with_items:
+#    - {section: "memcached", option: "memcached.sess_lock_expire", value: "{{php_fpm_max_execution_time}}"}
+#    - {section: "memcached", option: "memcached.sess_locking", value: "Off"}
+#    notify: restart-php-fpm
+
+-   name: SESSION | Ensure memcached is running
+    service:
+        name: memcached
+        state: started
+        enabled: yes
+
+-   name: SESSION | Configure memcached as php-fpm session handler
+    ini_file:
+        path: "{{php_fpm_ini_path}}"
+        section: "{{item.section}}"
+        option: "{{item.option}}"
+        value: "{{item.value}}"
+    with_items:
+    - {section: "Session", option: "session.save_handler", value: "memcached"}
+    - {section: "Session", option: "session.save_path", value: "127.0.0.1:11211"}
+    notify: 
+        - restart-nginx
+        - restart-php-fpm

@@ -1,0 +1,100 @@
+---
+- name: Ensure dirmngr is installed (gnupg dependency).
+  apt:
+    name: dirmngr
+    state: present
+
+- name: Add repository for PHP versions (Ubuntu).
+  apt_repository: repo='ppa:ondrej/php'
+
+- name: Purge PHP version packages (besides the currently chosen php_version).
+  apt:
+    name: "{{ php_versions_debian | reject('search', 'php' ~ php_version) | list }}"
+    state: absent
+    purge: true
+    force: true
+  register: php_version_purge
+
+- name: Also purge php-common package if any versions were just purged.
+  apt:
+    name: php-common
+    state: absent
+    purge: true
+    force: true
+  when: php_version_purge.changed | bool
+ 
+- name: Install PHP packages
+  apt:
+    name: "{{ php-packages }}"
+    update_cache: yes
+    state: latest
+
+-   name: "Configure php fpm ini"
+    ini_file:
+        path: "{{php_fpm_ini_path}}"
+        section: "{{item.section}}"
+        option: "{{item.option}}"
+        value: "{{item.value}}"
+    with_items:
+    - {section: "PHP", option: "memory_limit", value: "{{php_fpm_memory_limit}}"}
+    - {section: "PHP", option: "max_execution_time", value: "{{php_fpm_max_execution_time}}"}
+    - {section: "PHP", option: "max_input_vars", value: "{{php_max_input_vars}}"}
+    - {section: "PHP", option: "realpath_cache_size", value: "{{php_fpm_realpath_cache_size}}"}
+    - {section: "PHP", option: "realpath_cache_ttl", value: "{{php_fpm_realpath_cache_ttl}}"}
+    - {section: "Date", option: "date.timezone", value: "Europe/Berlin"}
+
+-   name: "Configure php fpm www pool conf"
+    ini_file:
+        path: "{{php_fpm_pool_conf_path}}"
+        section: "{{item.section}}"
+        option: "{{item.option}}"
+        value: "{{item.value}}"
+        state: "{{item.state | default('present')}}"
+    with_items:
+    - {section: "www", option: "user", value: "{{php_fpm_conf_user}}"}
+    - {section: "www", option: "group", value: "{{php_fpm_conf_group}}"}
+    - {section: "www", option: "listen", value: "{{php_fpm_socket_path}}"}
+    - {section: "www", option: "listen.owner", value: "{{php_fpm_conf_user}}"}
+    - {section: "www", option: "listen.group", value: "{{php_fpm_conf_group}}"}
+    - {section: "www", option: "listen.mode", value: "{{php_fpm_conf_mode}}"}
+    - {section: "www", option: "listen.acl_users", value: "", state: "absent"}
+    - {section: "www", option: "catch_workers_output", value: "yes"}
+    - {section: "www", option: "php_value[session.save_handler]", value: "{{php_session_handler}}"}
+    - {section: "www", option: "php_value[session.save_path]", value: "127.0.0.1:11211"}
+    - {section: "www", option: "php_value[soap.wsdl_cache_dir]", value: "{{ php_fpm_wsdl_cache_dir }}"}
+    - {section: "www", option: "php_admin_value[max_execution_time]", value: "{{php_fpm_max_execution_time}}"}
+    - {section: "www", option: "php_value[memcached.sess_lock_wait_min]", value: "{{ php_fpm_sess_lock_wait_min }}"}
+    - {section: "www", option: "php_value[memcached.sess_lock_wait_max]", value: "{{ php_fpm_sess_lock_wait_max }}"}
+    - {section: "www", option: "php_value[memcached.sess_lock_retries]", value: "{{ php_fpm_sess_lock_retries }}"}
+    - {section: "www", option: "php_value[memcached.sess_lock_expire]", value: "{{php_fpm_sess_lock_expire}}"}
+    notify: restart-php-fpm
+
+-   name: OPCACHE | Configure opcache
+    ini_file:
+        path: "{{php_opcache_ini_path}}"
+        section: "{{item.section}}"
+        option: "{{item.option}}"
+        value: "{{item.value}}"
+    with_items:
+    - {section: null, option: "opcache.enabled", value: "0"}
+    - {section: null, option: "opcache.revalidate_freq", value: "0"}
+    - {section: null, option: "opcache.validate_timestamps", value: "0"}
+    - {section: null, option: "opcache.max_accelerated_files", value: "20000"}
+    - {section: null, option: "opcache.memory_consumption", value: "256"}
+    - {section: null, option: "opcache.interned_strings_buffer", value: "16"}
+    - {section: null, option: "opcache.fast_shutdown", value: "1"}
+    notify: restart-php-fpm
+
+-   name: Start php-fpm
+    service:
+        name: "{{ php_fpm_service }}"
+        state: started
+        enabled: yes
+
+-   set_fact:
+        php_fpm_socket_path:  "{{ php_fpm_socket_path }}"
+        php_version:  "{{ php_version }}"
+
+-   include_tasks: composer.yml
+
+-   include_tasks: "session_{{php_session_handler}}.yml"
