@@ -31,7 +31,6 @@
             name: mysql
             apply:
                 become: yes
-        when: mysql_install
 
     -   include_role:
             name: ntp

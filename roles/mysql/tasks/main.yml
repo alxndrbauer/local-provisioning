@@ -1,0 +1,106 @@
+---
+
+- name: Add Mysql 5.7 repository.
+  apt_repository: repo='ppa:ondrej/mysql-5.7'
+- name: Check if MySQL is already installed.
+  stat: path=/etc/init.d/mysql
+  register: mysql_installed
+
+- name: Update apt cache if MySQL is not yet installed.
+  apt: update_cache=yes
+  when: not mysql_installed.stat.exists
+
+- name: Determine required MySQL Python libraries.
+  set_fact:
+    mysql_python_package_debian: "{% if 'python3' in ansible_python_interpreter|default('') %}python3-mysqldb{% else %}python-mysqldb{% endif %}"
+  when: mysql_python_package_debian is not defined
+
+- name: Ensure MySQL Python libraries are installed.
+  apt:
+    name: "{{ mysql_python_package_debian }}"
+    state: present
+
+- name: Ensure MySQL packages are installed.
+  apt:
+    name: "{{ mysql_packages }}"
+    state: present
+  register: deb_mysql_install_packages
+
+# Because Ubuntu starts MySQL as part of the install process, we need to stop
+# mysql and remove the logfiles in case the user set a custom log file size.
+- name: Ensure MySQL is stopped after initial install.
+  service: "name={{ mysql_daemon }} state=stopped"
+  when: not mysql_installed.stat.exists
+
+- name: Delete innodb log files created by apt package after initial install.
+  file: path={{ mysql_datadir }}/{{ item }} state=absent
+  with_items:
+    - ib_logfile0
+    - ib_logfile1
+  when: not mysql_installed.stat.exists
+  
+-   name: Start MySQL Daemon
+    service:
+        name: "{{ mysql_daemon }}"
+        state: started
+        enabled: yes
+
+-   name: Get MySQL version.
+    command: 'mysql --version'
+    check_mode: false
+
+-   name: Check that the .my.cnf exists
+    stat:
+        path: /root/.my.cnf
+    register: stat_result
+
+-   name: Find temporary password
+    shell: "echo `grep 'temporary.*root@localhost' /var/log/mysqld.log | sed 's/.*root@localhost: //'`"
+    register: mysql_root_password_temp
+    tags: register
+    when: stat_result.stat.exists == False
+
+-   name: Update MySQL root password for localhost root account (5.7.x).
+    shell: 'mysql -e "SET PASSWORD = PASSWORD(''{{ mysql_root_password }}'');" --connect-expired-password -uroot -p"{{ mysql_root_password_temp.stdout }}"'
+    when: stat_result.stat.exists == False
+
+-   name: Copy .my.cnf file with root password credentials.
+    template:
+        src: "root-my.cnf.j2"
+        dest: "/root/.my.cnf"
+        owner: root
+        group: root
+        mode: 0600
+
+-   name: Remove anonymous mysql user
+    mysql_user:
+        name: ''
+        host: localhost
+        state: absent
+
+-   name: "Configure my.cnf settings"
+    ini_file:
+        path: /etc/mysql/my.cnf
+        section: "{{item.section}}"
+        option: "{{item.option}}"
+        value: "{{item.value}}"
+    with_items:
+    - {section: "mysqld", option: "character-set-server", value: "{{mysql_character_set_server}}"}
+    - {section: "mysqld", option: "collation-server", value: "{{mysql_collation_server}}"}
+    - {section: "mysqld", option: "max_allowed_packet", value: "64M"}
+    - {section: "mysqld", option: "show_compatibility_56", value: "ON"}
+    - {section: "mysqld", option: "sql_mode", value: '"NO_ENGINE_SUBSTITUTION"'}
+    - {section: "mysqld", option: "query_cache_size", value: "256M"}
+    - {section: "mysqld", option: "query_cache_type", value: "1"}
+    - {section: "mysqld", option: "query_cache_limit", value: "96M"}
+    - {section: "mysqld", option: "table_open_cache", value: "4000"}
+    - {section: "mysqld", option: "sort_buffer_size", value: "2M"}
+    #- {section: "mysqld", option: "join_buffer_size", value: "50M"}
+    - {section: "mysqld", option: "read_rnd_buffer_size", value: "2m"}
+    - {section: "mysqld", option: "innodb_buffer_pool_size", value: "2G"}
+    - {section: "mysqld", option: "innodb_buffer_pool_instances", value: "2"}
+    - {section: "mysqld", option: "innodb_log_file_size", value: "256M"}
+    - {section: "mysqld", option: "tmp_table_size", value: "256M"}
+    - {section: "mysqld", option: "max_heap_table_size", value: "256M"}
+    - {section: "mysqld", option: "thread_cache_size", value: "300"}
+    notify: restart-mysql
