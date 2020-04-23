@@ -9,7 +9,7 @@
 
 - name: Purge PHP version packages (besides the currently chosen php_version).
   apt:
-    name: "{{ php_versions_debian | reject('search', 'php' ~ php_version) | list }}"
+    name: "{{ php_versions_to_purge | reject('search', 'php' ~ php_version) | list }}"
     state: absent
     purge: true
     force: true
@@ -25,7 +25,7 @@
  
 - name: Install PHP packages
   apt:
-    name: "{{ php-packages }}"
+    name: "{{ php_packages }}"
     update_cache: yes
     state: latest
 

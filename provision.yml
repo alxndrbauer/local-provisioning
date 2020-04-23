@@ -17,16 +17,15 @@
             apply:
                 become: yes    
 
-    -   include_role:
-            name: php
-            apply:
-                become: yes
+    # -   include_role:
+    #         name: php
+    #         apply:
+    #             become: yes
 
     -   include_role:
             name: pip
             apply:
                 become: yes
-        when: pip_install
 
     -   include_role:
             name: mysql
