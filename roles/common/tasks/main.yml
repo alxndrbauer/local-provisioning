@@ -1,14 +1,13 @@
 ---
 
 
--   name: Install common packages
-    apt:
-        name: "{{ common_packages }}"
-        state: latest
-    #notify: yum-clean-all
-
 -   name: Update OS
     apt:
         name: "*"
         state: latest
         update_cache: yes
+
+-   name: Install common packages
+    apt:
+        name: "{{ common_packages }}"
+        state: latest

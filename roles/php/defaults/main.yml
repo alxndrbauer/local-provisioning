@@ -1,5 +1,5 @@
 ---
-php_version: "7.3"
+php_version: "7.4"
 
 php_versions_to_purge:
     - php7.2-common
@@ -38,10 +38,11 @@ php_fpm_service: "php-fpm"
 
 php_session_handler: "memcached"
 
-php_fpm_pool_conf_path: "/etc/php-fpm.d/www.conf"
-php_fpm_ini_path: "/etc/php.ini"
-php_opcache_ini_path: "/etc/php.d/10-opcache.ini"
-php_memcached_ini_path: "/etc/php.d/memcached.ini"
+php_fpm_pool_conf_path: "/etc/php/{{ php_version }}/fpm/pool.d/www.conf"
+php_cli_conf_dir: "/etc/php/{{ php_version }}/cli/conf.d"
+php_cli_ini_path: "/etc/php/{{ php_version }}/cli/php.ini"
+php_opcache_ini_path: "{{ php_cli_conf_dir }}/10-opcache.ini"
+php_memcached_ini_path: "{{ php_cli_conf_dir }}/10-memcached.ini"
 php_fpm_socket_path: "/var/run/php-fpm/php-fpm.sock"
 php_fpm_wsdl_cache_dir: "/tmp"
 php_fpm_memory_limit: "1024M"

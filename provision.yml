@@ -5,6 +5,9 @@
 
     vars:
         local_user: '{{ ansible_user_id }}'
+    
+    vars_files:
+    - vars/local.yml
 
     tasks:
     -   include_role:
@@ -13,14 +16,9 @@
                 become: yes
 
     -   include_role:
-            name: nginx
+            name: php
             apply:
-                become: yes    
-
-    # -   include_role:
-    #         name: php
-    #         apply:
-    #             become: yes
+                become: yes
 
     -   include_role:
             name: pip
@@ -28,59 +26,40 @@
                 become: yes
 
     -   include_role:
-            name: mysql
-            apply:
-                become: yes
-
-    -   include_role:
-            name: ntp
-            apply:
-                become: yes
-        when: ntp_install
-
-    -   include_role:
-            name: qpdf
-            apply:
-                become: yes
-        when: qpdf_install
-
-    -   include_role:
             name: docker
             apply:
                 become: yes
         when: docker_install
 
-    -   name: "NPM und YARN"
-        become: yes
-        shell: "curl --silent --location https://rpm.nodesource.com/setup_10.x | bash - && yum -y install nodejs && curl -o- -L https://yarnpkg.com/install.sh | bash && npm install -g gulp && npm install -g yarn"
-
-    -   name: "Create studios nginx site"
-        become: yes
-        template:
-            src: templates/nginx-site_studios_local.conf.j2
-            dest: /etc/nginx/sites-available/studios.conf
-        notify: restart-nginx
-
-    -   name: "Create campus nginx site"
-        become: yes
-        template:
-            src: templates/nginx-site_campus_local.conf.j2
-            dest: /etc/nginx/sites-available/campus.conf
-        notify: restart-nginx
+    # -   name: "NPM und YARN"
+    #     become: yes
+    #     shell: "curl --silent --location https://rpm.nodesource.com/setup_10.x | bash - && yum -y install nodejs && curl -o- -L https://yarnpkg.com/install.sh | bash && npm install -g gulp && npm install -g yarn"
 
 
-    -   name: "Enable studios nginx site"
-        become: yes
-        file:
-            src: /etc/nginx/sites-available/studios.conf
-            dest: /etc/nginx/sites-enabled/studios.conf
-            state: link
-        notify: restart-nginx
+    -   name: "Ceck if symfony ci is installed"
+        stat:
+          path: /usr/local/bin/symfony
+        register: symfony_cli_installed    
 
-    -   name: "Enable studios nginx site"
+    # -   name: "Install Symfony Cli"
+    #     command: wget https://get.symfony.com/cli/installer -O - | bash
+    #     when: not symfony_cli_installed.stat.exists
+
+    -   name: Download symfony installer
+        get_url: 
+            url: https://get.symfony.com/cli/installer
+            dest: /tmp/symfony_cli_installer
+        when: not symfony_cli_installed.stat.exists
+
+    -   name: Execute the symfony installer
+        script: /tmp/symfony_cli_installer
+        when: not symfony_cli_installed.stat.exists
+
+    -   name: Install globally
+        command: mv /home/{{ ansible_user_id }}/.symfony/bin/symfony /usr/local/bin/symfony
+        when: not symfony_cli_installed.stat.exists
         become: yes
-        file:
-            src: /etc/nginx/sites-available/campus.conf
-            dest: /etc/nginx/sites-enabled/campus.conf
-            state: link
-        notify: restart-nginx
+
+    -   name: Remove the symfony installer
+        file: path=/tmp/symfony_cli_installer state=absent
+        

@@ -29,9 +29,9 @@
     update_cache: yes
     state: latest
 
--   name: "Configure php fpm ini"
+-   name: "Configure php ini"
     ini_file:
-        path: "{{php_fpm_ini_path}}"
+        path: "{{ php_cli_ini_path }}"
         section: "{{item.section}}"
         option: "{{item.option}}"
         value: "{{item.value}}"
@@ -41,6 +41,7 @@
     - {section: "PHP", option: "max_input_vars", value: "{{php_max_input_vars}}"}
     - {section: "PHP", option: "realpath_cache_size", value: "{{php_fpm_realpath_cache_size}}"}
     - {section: "PHP", option: "realpath_cache_ttl", value: "{{php_fpm_realpath_cache_ttl}}"}
+    - {section: "PHP", option: "soap.wsdl_cache_dir", value: "{{ php_fpm_wsdl_cache_dir }}"}
     - {section: "Date", option: "date.timezone", value: "Europe/Berlin"}
 
 -   name: "Configure php fpm www pool conf"
@@ -85,11 +86,11 @@
     - {section: null, option: "opcache.fast_shutdown", value: "1"}
     notify: restart-php-fpm
 
--   name: Start php-fpm
-    service:
-        name: "{{ php_fpm_service }}"
-        state: started
-        enabled: yes
+# -   name: Start php-fpm
+#     service:
+#         name: "{{ php_fpm_service }}"
+#         state: started
+#         enabled: yes
 
 -   set_fact:
         php_fpm_socket_path:  "{{ php_fpm_socket_path }}"
@@ -97,4 +98,4 @@
 
 -   include_tasks: composer.yml
 
--   include_tasks: "session_{{php_session_handler}}.yml"
+# -   include_tasks: "session_{{php_session_handler}}.yml"

@@ -12,3 +12,5 @@ common_packages:
     - ca-certificates
     - software-properties-common
     - apt-transport-https
+    - zsh
+    - mysql-client
